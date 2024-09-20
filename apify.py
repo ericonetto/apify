@@ -26,6 +26,19 @@ For example, if the function is:
 def sum(a, b)
 Then in the POST the body must be, for example {"a": 1, "b":2 }
 
+There are two parameters internal to this module that will be automatically passed to any functions if the function have one or both of these parameters 'flask_app' and 'flask_request'
+'flask_app' is the flask_app object of this module, defined in the line: flask_app = Flask(__name__)
+'flask_request' is the request object that is passed when the flask endpoint function is called
+
+Usage:
+def example_to_redirect(flask_app):
+    redirect_url = "https://url.to.redirect.com/path"
+    return flask_app.redirect(redirect_url)
+
+def exmaple_to_get_query_string(flask_request):
+    query_string = flask_request.query_string
+    return f'Query string: {query_string}'
+
 """
 
 
@@ -43,7 +56,7 @@ import types
 
 
 ignore = ["venv", "__pycache__"]
-root_directory = "."
+root_directory = "archives"
 
 
 
@@ -75,7 +88,8 @@ def find_py_files_with_pathlib(directory, ignore =[]):
     root_directory_path = Path(directory)
     ignore_paths =[]
     for p in ignore:
-        ignore_paths.append(Path(p).relative_to(root_directory_path))
+        ignore_path = Path(os.path.join(directory, p))
+        ignore_paths.append(ignore_path.relative_to(root_directory_path))
 
     file_list = []
     for file in root_directory_path.rglob("*.py"):
@@ -84,7 +98,7 @@ def find_py_files_with_pathlib(directory, ignore =[]):
 
 
         if not is_subpath_of_any(file_file,ignore_paths):
-            file_list.append(str(file_file))
+            file_list.append(file)
 
     return file_list
 
@@ -103,10 +117,10 @@ def import_module_from_path(path):
     return module
 
 
-app = Flask(__name__)
+flask_app = Flask(__name__)
 
 
-python_files = find_py_files_with_pathlib(root_directory, [os.path.basename(__file__)] + ignore)
+python_files_paths = find_py_files_with_pathlib(root_directory, [os.path.basename(__file__)] + ignore)
 modules = {}
 
 # Function to create a new function with a dynamic name and decorator
@@ -122,7 +136,7 @@ def dynamic_route_creator(original_func, route_path, new_name, methods=['POST'])
     )
     
     # Manually add the route for the new function
-    app.route(route_path, methods = methods)(new_func)
+    flask_app.route(route_path, methods = methods)(new_func)
 
     return new_func
 
@@ -153,6 +167,17 @@ def receive_data():
                 except Exception as e:
                     return str(e), 500
 
+        if "flask_app" in list_parameters:
+            if data==None:
+                data = {}
+            data["flask_app"] = flask_app
+
+        if "flask_request" in list_parameters:
+            if data==None:
+                data = {}
+            data["flask_request"] = request
+
+
         kwargs = data
 
         if kwargs:
@@ -169,43 +194,48 @@ def receive_data():
 
     if request.method == 'HEAD':
         # Respond with headers but no body
-        response = app.response_class()
+        response = flask_app.response_class()
         response.headers['Content-Type'] = 'application/json'
         response.headers['Content-Length'] = len(str({"data":result}))
         return response
 
-
-    return {"data":result}, 200
+    if isinstance(result, int) or isinstance(result, float) or isinstance(result, dict) or isinstance(result, list) or isinstance(result, bool) or isinstance(result, str) or result==None:
+        return {"data":result}, 200
+    else:
+        return result
 
 
 ##########################################
 
 ##########################################
 def initialize():
-    for module_path in python_files:
+    for module_path in python_files_paths:
 
-        module_name = module_path[:-3]
+        module_name = module_path.stem
 
-        modules[module_name] = import_module_from_path(module_path)
+        modules[module_name] = import_module_from_path(str(module_path))
 
 
         for function_name, module_func in getmembers(modules[module_name], isfunction):
 
-            route_path = "/" +  module_name + "/" + function_name
+
+            route_path = str(Path(root_directory)).replace(str(module_path.parent),"/")
+
+            route_path = route_path +  module_name + "/" + function_name
 
             function_name = route_path.replace("/", "_")
 
             dynamic_route_creator(receive_data, route_path, function_name, ['POST', 'GET'])
 
 
-@app.route("/")
+@flask_app.route("/")
 def documentation():
     """
     This endpoint provides documentation for all the available routes.
     """
     # Get all the routes from the app
     routes = []
-    for rule in app.url_map.iter_rules():
+    for rule in flask_app.url_map.iter_rules():
         # Skip endpoint if it has no methods or is an internal rule
         endpoint_description={
             "endpoint": rule.rule,
@@ -226,7 +256,12 @@ def documentation():
             if len(list_parameters)>0:
                 endpoint_description["body"]={}
                 for param in list_parameters:
-                    endpoint_description["body"][param] = "value"
+                    if param != "flask_app":
+                        endpoint_description["body"][param] = "value"
+                    if param != "flask_request":
+                        endpoint_description["body"][param] = "value"
+
+
             if module_func.__doc__:
                 endpoint_description["doc"] = module_func.__doc__
 
@@ -239,6 +274,8 @@ def documentation():
 
 if __name__ == '__main__':
     initialize()
+    absolute_root_path = str(Path(root_directory).absolute())
+    os.chdir(absolute_root_path)
     # Run the app on port 9000
-    app.run(debug=True, port=9000)
+    flask_app.run(debug=True, use_reloader=False, port=9000)
 
