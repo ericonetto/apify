@@ -1,0 +1,6 @@
+config.json
+*.csv
+*.log
+__pycache__/
+venv/
+archives/
