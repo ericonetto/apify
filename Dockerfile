@@ -8,7 +8,7 @@ FROM python:3.12-slim-bullseye
 ENV PYHON_MODULES_DIRECTORY="archives"
 
 #this what folders to ignore that are sub folders inside of the PYHON_MODULES_FOLDER, should be  a list, whre each item is separetad by comma ','
-ENV IGNORE=="venv,__pycache__"
+ENV IGNORE="venv,__pycache__"
 
 #this argument will be passed to any funtion that has 'apify_modules_args' as input argument
 ENV MODULES_ARGS=""
@@ -21,17 +21,20 @@ ENV DEBUG="false"
 # Set working directory
 WORKDIR /
 
+
+
+ARG MODULES_DIRECTORY="$PYHON_MODULES_DIRECTORY"
+
 # Copy the current directory (excluding folders/files in .dockerignore)
 COPY . .
 
 # Install the required packages
 RUN pip install --no-cache-dir -r requirements_apify.txt
-
-
-ARG MODULES_DIRECTORY="$PYHON_MODULES_DIRECTORY"
 # Install the required packages from teh modules
 RUN pip install --no-cache-dir -r $MODULES_DIRECTORY/requirements.txt
 
 
+CMD  ["sh", "-c", "gunicorn --bind 0.0.0.0:${EXPOSE_PORT} apify:apify_app"]
+
 # Command to run your Python application
-CMD ["python", "apify.py"]
+#CMD ["python", "apify.py"]

@@ -62,7 +62,6 @@ import inspect
 import types
 
 
-
 root_folder = os.getenv('PYHON_MODULES_DIRECTORY', 'archives')
 
 ignore_str =  os.getenv('IGNORE', 'venv,__pycache__')
@@ -74,6 +73,13 @@ debug_mode = os.getenv('DEBUG', "false") == "true"
 
 port = int(os.getenv('EXPOSE_PORT', 9000))
 
+
+print(f"root_folder={root_folder}")
+print(f"ignore_str={ignore_str}")
+print(f"ignore_list={ignore_list}")
+print(f"apify_modules_args={apify_modules_args}")
+print(f"debug_mode={debug_mode}")
+print(f"port={port}")
 
 # DO NOT EDIT BELOW THIS LINE 
 #############################
@@ -88,10 +94,13 @@ def is_subpath_of_any(test_path: Path, paths_list: list[Path]) -> bool:
     Returns:
         bool: True if 'test_path' is a subpath of any path in 'paths_list', False otherwise.
     """
+
+    root_folder_path = Path(root_folder)
     test_path_resolved = test_path.resolve()
 
     for parent_path in paths_list:
-        if test_path_resolved.is_relative_to(parent_path.resolve()):
+        parent_path_resolved = Path(os.path.join(root_folder_path, parent_path)).resolve()
+        if test_path_resolved.is_relative_to(parent_path_resolved):
             return True
     
     return False
@@ -107,10 +116,8 @@ def find_py_files_with_pathlib(folder, ignore =[]):
     file_list = []
     for file in root_folder_path.rglob("*.py"):
 
-        file_file = file.relative_to(root_folder_path)
 
-
-        if not is_subpath_of_any(file_file,ignore_paths):
+        if not is_subpath_of_any(file,ignore):
             file_list.append(file)
 
     return file_list
@@ -230,6 +237,7 @@ def initialize():
 
         module_name = module_path.stem
 
+        print(f"Importing module {module_path}")
         modules[module_name] = import_module_from_path(str(module_path))
 
 
@@ -289,10 +297,10 @@ def documentation():
     return jsonify({"routes": routes})
 
 
-if __name__ == '__main__':
-    initialize()
-    absolute_root_path = str(Path(root_folder).absolute())
-    os.chdir(absolute_root_path)
-    # Run the app
+print("Initializing")
+initialize()
+absolute_root_path = str(Path(root_folder).absolute())
+os.chdir(absolute_root_path)
+# Run the app
+if __name__ == "__main__":
     apify_app.run(host='0.0.0.0', debug=debug_mode, use_reloader=False, port=port)
-
