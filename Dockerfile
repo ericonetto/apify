@@ -35,6 +35,3 @@ RUN pip install --no-cache-dir -r $MODULES_DIRECTORY/requirements.txt
 
 
 CMD  ["sh", "-c", "gunicorn --bind 0.0.0.0:${EXPOSE_PORT} apify:apify_app"]
-
-# Command to run your Python application
-#CMD ["python", "apify.py"]
