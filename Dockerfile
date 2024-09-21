@@ -4,7 +4,7 @@ FROM python:3.12-slim-bullseye
 
 # Set environment variables for the Python script
 
-#this is where is the root folder where are the pyhton modules where the funtions will be transformed in API endpoints
+#this is where is the root folder where are the pyhton modules where the funtions will be transformed in API endpoint
 ENV PYHON_MODULES_DIRECTORY="archives"
 
 #this what folders to ignore that are sub folders inside of the PYHON_MODULES_FOLDER, should be  a list, whre each item is separetad by comma ','
@@ -25,7 +25,12 @@ WORKDIR /
 COPY . .
 
 # Install the required packages
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements_apify.txt
+
+
+ARG MODULES_DIRECTORY="$PYHON_MODULES_DIRECTORY"
+# Install the required packages from teh modules
+RUN pip install --no-cache-dir -r $MODULES_DIRECTORY/requirements.txt
 
 
 # Command to run your Python application

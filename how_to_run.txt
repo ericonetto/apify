@@ -1,0 +1,2 @@
+docker build --no-cache -t python-app .
+docker run -e EXPOSE_PORT=8080 -p 8080:8080 python-app
