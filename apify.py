@@ -47,7 +47,7 @@ def exmaple_get_a_enviroment_variable(apify_modules_args):
 
 Env varibles that could be passed to this stript
 PYHON_MODULES_FOLDER -> this is where is the root folder where are the pyhton modules where the funtions will be transformed in API endpoints
-IGNORE -> this what folders to ignore that are sub folders inside of the PYHON_MODULES_FOLDER
+IGNORE -> this what folders to ignore that are sub folders inside of the PYHON_MODULES_FOLDER, should be  a list, whre each item is separetad by comma ','
 MODULES_ARGS -> this argument will be passed to any funtion that has 'apify_modules_args' as input argument
 """
 
@@ -69,6 +69,10 @@ ignore_str =  os.getenv('IGNORE', 'venv,__pycache__')
 ignore_list = [item.strip() for item in ignore_str.split(',')]
 
 apify_modules_args  = os.getenv('MODULES_ARGS', None)
+
+debug_mode = os.getenv('DEBUG', "false") == "true"
+
+port = int(os.getenv('EXPOSE_PORT', 9000))
 
 
 # DO NOT EDIT BELOW THIS LINE 
@@ -289,6 +293,6 @@ if __name__ == '__main__':
     initialize()
     absolute_root_path = str(Path(root_folder).absolute())
     os.chdir(absolute_root_path)
-    # Run the app on port 9000
-    apify_app.run(debug=True, use_reloader=False, port=9000)
+    # Run the app
+    apify_app.run(host='0.0.0.0', debug=debug_mode, use_reloader=False, port=port)
 
