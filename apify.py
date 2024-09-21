@@ -2,13 +2,13 @@
 This script was developpd by ERICO NETTO
 First version on 20-sep-2024
 
-This script when executed will automatically generate API endpoints for Python functions existing in Python modules in a specified directory.
+This script when executed will automatically generate API endpoints for Python functions existing in Python modules in a specified folder.
 This script will use the following parameters:
 
 ignore = ["venv", "__pycache__"]
-root_directory = "."
+root_folder = "."
 
-In the 'root_directory' it will go through all folders and subfolders for Python scripts, ignoring folders listed in 'ignore'
+In the 'root_folder' it will go through all folders and subfolders for Python scripts, ignoring folders listed in 'ignore'
 For each Python module found, the script will generate API endpoints for each of the Python functions existing within the module
 The API endpoints will have the same path as the path of the Python file found plus the name of the Python module found plus the name of the function, example:
 
@@ -26,19 +26,29 @@ For example, if the function is:
 def sum(a, b)
 Then in the POST the body must be, for example {"a": 1, "b":2 }
 
-There are two parameters internal to this module that will be automatically passed to any functions if the function have one or both of these parameters 'flask_app' and 'flask_request'
-'flask_app' is the flask_app object of this module, defined in the line: flask_app = Flask(__name__)
-'flask_request' is the request object that is passed when the flask endpoint function is called
+There are two parameters internal to this module that will be automatically passed to any functions if the function have one or both of these parameters 'apify_app' and 'apify_request'
+'apify_app' is the apify_app object of this module, defined in the line: apify_app = Flask(__name__)
+'apify_request' is the request object that is passed when the flask endpoint function is called
+'apify_modules_args' arguments to be used in the python scripts. In case you need to pass os.getenv args they will be obteined here and then could be used in the modules if in the function parameter 
 
-Usage:
-def example_to_redirect(flask_app):
+Usages examples:
+def example_to_redirect(apify_app):
     redirect_url = "https://url.to.redirect.com/path"
-    return flask_app.redirect(redirect_url)
+    return apify_app.redirect(redirect_url)
 
-def exmaple_to_get_query_string(flask_request):
-    query_string = flask_request.query_string
+def exmaple_to_get_query_string(apify_request):
+    query_string = apify_request.query_string
     return f'Query string: {query_string}'
 
+
+def exmaple_get_a_enviroment_variable(apify_modules_args):
+    return f'My enviroment variable is : {apify_modules_args}'
+
+
+Env varibles that could be passed to this stript
+PYHON_MODULES_FOLDER -> this is where is the root folder where are the pyhton modules where the funtions will be transformed in API endpoints
+IGNORE -> this what folders to ignore that are sub folders inside of the PYHON_MODULES_FOLDER
+MODULES_ARGS -> this argument will be passed to any funtion that has 'apify_modules_args' as input argument
 """
 
 
@@ -53,13 +63,12 @@ import types
 
 
 
+root_folder = os.getenv('PYHON_MODULES_DIRECTORY', 'archives')
 
+ignore_str =  os.getenv('IGNORE', 'venv,__pycache__')
+ignore_list = [item.strip() for item in ignore_str.split(',')]
 
-ignore = ["venv", "__pycache__"]
-root_directory = "archives"
-
-
-
+apify_modules_args  = os.getenv('MODULES_ARGS', None)
 
 
 # DO NOT EDIT BELOW THIS LINE 
@@ -84,17 +93,17 @@ def is_subpath_of_any(test_path: Path, paths_list: list[Path]) -> bool:
     return False
 
 
-def find_py_files_with_pathlib(directory, ignore =[]):
-    root_directory_path = Path(directory)
+def find_py_files_with_pathlib(folder, ignore =[]):
+    root_folder_path = Path(folder)
     ignore_paths =[]
     for p in ignore:
-        ignore_path = Path(os.path.join(directory, p))
-        ignore_paths.append(ignore_path.relative_to(root_directory_path))
+        ignore_path = Path(os.path.join(folder, p))
+        ignore_paths.append(ignore_path.relative_to(root_folder_path))
 
     file_list = []
-    for file in root_directory_path.rglob("*.py"):
+    for file in root_folder_path.rglob("*.py"):
 
-        file_file = file.relative_to(root_directory_path)
+        file_file = file.relative_to(root_folder_path)
 
 
         if not is_subpath_of_any(file_file,ignore_paths):
@@ -117,10 +126,10 @@ def import_module_from_path(path):
     return module
 
 
-flask_app = Flask(__name__)
+apify_app = Flask(__name__)
 
 
-python_files_paths = find_py_files_with_pathlib(root_directory, [os.path.basename(__file__)] + ignore)
+python_files_paths = find_py_files_with_pathlib(root_folder, [os.path.basename(__file__)] + ignore_list)
 modules = {}
 
 # Function to create a new function with a dynamic name and decorator
@@ -136,7 +145,7 @@ def dynamic_route_creator(original_func, route_path, new_name, methods=['POST'])
     )
     
     # Manually add the route for the new function
-    flask_app.route(route_path, methods = methods)(new_func)
+    apify_app.route(route_path, methods = methods)(new_func)
 
     return new_func
 
@@ -167,16 +176,20 @@ def receive_data():
                 except Exception as e:
                     return str(e), 500
 
-        if "flask_app" in list_parameters:
+        if "apify_app" in list_parameters:
             if data==None:
                 data = {}
-            data["flask_app"] = flask_app
+            data["apify_app"] = apify_app
 
-        if "flask_request" in list_parameters:
+        if "apify_request" in list_parameters:
             if data==None:
                 data = {}
-            data["flask_request"] = request
+            data["apify_request"] = request
 
+        if "apify_modules_args" in list_parameters:
+            if data==None:
+                data = {}
+            data["apify_modules_args"] = apify_modules_args
 
         kwargs = data
 
@@ -194,7 +207,7 @@ def receive_data():
 
     if request.method == 'HEAD':
         # Respond with headers but no body
-        response = flask_app.response_class()
+        response = apify_app.response_class()
         response.headers['Content-Type'] = 'application/json'
         response.headers['Content-Length'] = len(str({"data":result}))
         return response
@@ -219,7 +232,7 @@ def initialize():
         for function_name, module_func in getmembers(modules[module_name], isfunction):
 
 
-            route_path = str(Path(root_directory)).replace(str(module_path.parent),"/")
+            route_path = str(Path(root_folder)).replace(str(module_path.parent),"/")
 
             route_path = route_path +  module_name + "/" + function_name
 
@@ -228,14 +241,14 @@ def initialize():
             dynamic_route_creator(receive_data, route_path, function_name, ['POST', 'GET'])
 
 
-@flask_app.route("/")
+@apify_app.route("/")
 def documentation():
     """
     This endpoint provides documentation for all the available routes.
     """
     # Get all the routes from the app
     routes = []
-    for rule in flask_app.url_map.iter_rules():
+    for rule in apify_app.url_map.iter_rules():
         # Skip endpoint if it has no methods or is an internal rule
         endpoint_description={
             "endpoint": rule.rule,
@@ -256,9 +269,9 @@ def documentation():
             if len(list_parameters)>0:
                 endpoint_description["body"]={}
                 for param in list_parameters:
-                    if param != "flask_app":
+                    if param != "apify_app":
                         endpoint_description["body"][param] = "value"
-                    if param != "flask_request":
+                    if param != "apify_request":
                         endpoint_description["body"][param] = "value"
 
 
@@ -274,8 +287,8 @@ def documentation():
 
 if __name__ == '__main__':
     initialize()
-    absolute_root_path = str(Path(root_directory).absolute())
+    absolute_root_path = str(Path(root_folder).absolute())
     os.chdir(absolute_root_path)
     # Run the app on port 9000
-    flask_app.run(debug=True, use_reloader=False, port=9000)
+    apify_app.run(debug=True, use_reloader=False, port=9000)
 
