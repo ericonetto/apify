@@ -178,14 +178,15 @@ def receive_data():
 
         if len(list_parameters)>0:
             if request.method == "POST" or request.method == 'HEAD':
-                try:
-                    data = request.get_json()
-                    # Print the received data
-                    print("\n\n")
-                    print(f"Received data: {data}")
+                if request.mimetype == 'application/json':
+                    try:
+                        data = request.get_json()
+                        # Print the received data
+                        print("\n\n")
+                        print(f"Received data: {data}")
 
-                except Exception as e:
-                    return str(e), 500
+                    except Exception as e:
+                        return str(e), 500
 
         if "apify_app" in list_parameters:
             if data==None:
