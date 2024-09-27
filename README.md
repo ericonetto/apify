@@ -124,10 +124,16 @@ def example_get_a_external_custom_variable(apify_modules_args):
     return f'My external custom variable is: {apify_modules_args}'
 ```
 
-Getting Started
+### Getting Started
 1. Set up the environment variables as needed.
 2. Run the script.
 3. Access your endpoints via <server_url>/<folder_path>/<module_name>/<function_name>.
+
+### Docker
+```
+docker build --no-cache -t python-app .
+docker run -e EXPOSE_PORT=8080 -p 8080:8080 python-app
+```
 
 ## License
 
