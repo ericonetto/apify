@@ -26,10 +26,10 @@ For example, if the function is:
 def sum(a, b)
 Then in the POST the body must be, for example {"a": 1, "b":2 }
 
-There are two parameters internal to this module that will be automatically passed to any functions if the function have one or both of these parameters 'apify_app' and 'apify_request'
+There are three parameters internal to this module that will be automatically passed to any functions if the function have one ormore of them are present, they are: 'apify_app', 'apify_request' and apify_modules_args
 'apify_app' is the apify_app object of this module, defined in the line: apify_app = Flask(__name__)
 'apify_request' is the request object that is passed when the flask endpoint function is called
-'apify_modules_args' arguments to be used in the python scripts. In case you need to pass os.getenv args they will be obteined here and then could be used in the modules if in the function parameter 
+'apify_modules_args' arguments to be used in the python scripts. In case you need to pass os.getenv args they will be obteined here and then could be used in the modules if present in the function parameters 
 
 Usages examples:
 def example_to_redirect(apify_app):
@@ -40,14 +40,14 @@ def exmaple_to_get_query_string(apify_request):
     query_string = apify_request.query_string
     return f'Query string: {query_string}'
 
-
-def exmaple_get_a_enviroment_variable(apify_modules_args):
-    return f'My enviroment variable is : {apify_modules_args}'
+#pass the value by an enviroment variable MODULES_ARGS, its value will be automaticaly applyed in the function parameter 'apify_modules_args'
+def exmaple_get_a_external_custom_variable(apify_modules_args):
+    return f'My external custom variable is : {apify_modules_args}'
 
 
 Env varibles that could be passed to this stript
-PYHON_MODULES_FOLDER -> this is where is the root folder where are the pyhton modules where the funtions will be transformed in API endpoints
-IGNORE -> this what folders to ignore that are sub folders inside of the PYHON_MODULES_FOLDER, should be  a list, whre each item is separetad by comma ','
+PYHON_MODULES_FOLDER -> this is where is the root folder. Where are the pyhton modules files, in each of where are the funtions that will be transformed in API endpoints
+IGNORE -> this a list of folders to ignore in sub folders inside of the PYHON_MODULES_FOLDER. It should be a list, whre each item is separetad by comma ','
 MODULES_ARGS -> this argument will be passed to any funtion that has 'apify_modules_args' as input argument
 """
 
@@ -63,14 +63,10 @@ import types
 
 
 root_folder = os.getenv('PYHON_MODULES_DIRECTORY', 'archives')
-
 ignore_str =  os.getenv('IGNORE', 'venv,__pycache__')
 ignore_list = [item.strip() for item in ignore_str.split(',')]
-
 apify_modules_args  = os.getenv('MODULES_ARGS', None)
-
 debug_mode = os.getenv('DEBUG', "false") == "true"
-
 port = int(os.getenv('EXPOSE_PORT', 9000))
 
 
