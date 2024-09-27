@@ -1,0 +1,20 @@
+[project]
+name = "apify"
+version = "0.0.1"
+authors = [
+  { name="Erico Netto", email="nettoerico11@gmail.com" },
+]
+description = "A script that automatically generates RESTful API endpoints for Python functions in specified modules."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3.0 (GPL-3.0)",
+    "Operating System :: OS Independent",
+    "Framework :: Flask",
+    "Topic :: Software Development :: Libraries :: Application Frameworks"
+]
+
+[project.urls]
+Homepage = "https://github.com/ericonetto/apify"
+Issues = "https://github.com/ericonetto/apify/issues"
