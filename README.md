@@ -1,6 +1,10 @@
 # Apify a Python API Endpoint Generator
 
 
+<img src="assets/img/SDG_logo.png">
+
+
+
 ### Developed by: ERICO NETTO  
 **First Version:** 20-Sep-2024  
 
