@@ -6,3 +6,4 @@ venv/
 archives/*
 .vscode
 testdata/*
+.DS_Store
