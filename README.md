@@ -145,7 +145,7 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
 
 - You must provide a copy of this license with any distribution of this software.
 - Any modifications must retain the original developer's name: ERICO NETTO.
-- Derived works must also be open-source under the same license.
+- Derived works must also be open-source under the same license and a copy of the original license
 
 For more details, please refer to the [full text of the GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.txt).
 

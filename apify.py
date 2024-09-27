@@ -1,54 +1,29 @@
 """
-This script was developpd by ERICO NETTO
-First version on 20-sep-2024
+Copyright (c) 2024 Erico NETTO
 
-This script when executed will automatically generate API endpoints for Python functions existing in Python modules in a specified folder.
-This script will use the following parameters:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-ignore = ["venv", "__pycache__"]
-root_folder = "."
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-In the 'root_folder' it will go through all folders and subfolders for Python scripts, ignoring folders listed in 'ignore'
-For each Python module found, the script will generate API endpoints for each of the Python functions existing within the module
-The API endpoints will have the same path as the path of the Python file found plus the name of the Python module found plus the name of the function, example:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-<server url>/folder1/folder2/module_name/function_name
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
 
-To view the DOCUMENTATION of all created endpoints, simply do a GET in the root folder: <server url>/
-
-The generated endpoints will work in the same way as the functions they are based on, if the function does not receive any parameters, 
-both the GET and POST methods will return what the function returns. 
-The return will always be in the form: {"data": <data returned by the function>}
-If the function does not return any value, the return will be: {"data": null}
-
-The function parameters must be passed in JSON format via POST
-For example, if the function is:
-def sum(a, b)
-Then in the POST the body must be, for example {"a": 1, "b":2 }
-
-There are three parameters internal to this module that will be automatically passed to any functions if the function have one ormore of them are present, they are: 'apify_app', 'apify_request' and apify_modules_args
-'apify_app' is the apify_app object of this module, defined in the line: apify_app = Flask(__name__)
-'apify_request' is the request object that is passed when the flask endpoint function is called
-'apify_modules_args' arguments to be used in the python scripts. In case you need to pass os.getenv args they will be obteined here and then could be used in the modules if present in the function parameters 
-
-Usages examples:
-def example_to_redirect(apify_app):
-    redirect_url = "https://url.to.redirect.com/path"
-    return apify_app.redirect(redirect_url)
-
-def exmaple_to_get_query_string(apify_request):
-    query_string = apify_request.query_string
-    return f'Query string: {query_string}'
-
-#pass the value by an enviroment variable MODULES_ARGS, its value will be automaticaly applyed in the function parameter 'apify_modules_args'
-def exmaple_get_a_external_custom_variable(apify_modules_args):
-    return f'My external custom variable is : {apify_modules_args}'
-
-
-Env varibles that could be passed to this stript
-PYHON_MODULES_FOLDER -> this is where is the root folder. Where are the pyhton modules files, in each of where are the funtions that will be transformed in API endpoints
-IGNORE -> this a list of folders to ignore in sub folders inside of the PYHON_MODULES_FOLDER. It should be a list, whre each item is separetad by comma ','
-MODULES_ARGS -> this argument will be passed to any funtion that has 'apify_modules_args' as input argument
+You must provide a copy of this license with any distribution of this software.
+Any modifications must retain the original developer's name: ERICO NETTO.
+Derived works must also be open-source under the same license.
 """
 
 
