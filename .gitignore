@@ -3,7 +3,7 @@ config.json
 *.log
 __pycache__/
 venv/
-archives/*
+application_layer/*
 .vscode
 testdata/*
 .DS_Store
