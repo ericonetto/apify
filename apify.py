@@ -38,7 +38,7 @@ import types
 
 
 root_folder = os.getenv('PYHON_MODULES_DIRECTORY', 'application_layer')
-ignore_str =  os.getenv('IGNORE', 'venv,__pycache__')
+ignore_str =  os.getenv('IGNORE', 'venv,__pycache__,secrets')
 ignore_list = [item.strip() for item in ignore_str.split(',')]
 apify_modules_args  = os.getenv('MODULES_ARGS', None)
 debug_mode = os.getenv('DEBUG', "false") == "true"
@@ -214,15 +214,18 @@ def initialize():
 
 
         for function_name, module_func in getmembers(modules[module_name], isfunction):
+            #this 'if' is to avoid adding functions from imported modules inside the main module 'module_name' that we are geting functions from
+            file_module_where_function_where_declared = module_func.__code__.co_filename
+            module_where_function_where_declared = os.path.splitext(os.path.basename(file_module_where_function_where_declared))[0]
+            if module_where_function_where_declared == module_name:
 
+                route_path = str(Path(root_folder)).replace(str(module_path.parent),"/")
 
-            route_path = str(Path(root_folder)).replace(str(module_path.parent),"/")
+                route_path = route_path +  module_name + "/" + function_name
 
-            route_path = route_path +  module_name + "/" + function_name
+                function_name = route_path.replace("/", "_")
 
-            function_name = route_path.replace("/", "_")
-
-            dynamic_route_creator(receive_data, route_path, function_name, ['POST', 'GET'])
+                dynamic_route_creator(receive_data, route_path, function_name, ['POST', 'GET'])
 
 
 @apify_app.route("/")
@@ -253,9 +256,7 @@ def documentation():
             if len(list_parameters)>0:
                 endpoint_description["body"]={}
                 for param in list_parameters:
-                    if param != "apify_app":
-                        endpoint_description["body"][param] = "value"
-                    if param != "apify_request":
+                    if not param in ["apify_app", "apify_request"]:
                         endpoint_description["body"][param] = "value"
 
 
@@ -263,7 +264,7 @@ def documentation():
                 endpoint_description["doc"] = module_func.__doc__
 
 
-        routes.append(endpoint_description)
+            routes.append(endpoint_description)
 
     # Return the routes as a JSON object or render it in HTML if desired
     return jsonify({"routes": routes})

@@ -4,6 +4,7 @@ config.json
 __pycache__/
 venv/
 application_layer/*
+secrets/*
 .vscode
 testdata/*
 .DS_Store
