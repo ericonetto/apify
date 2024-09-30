@@ -259,7 +259,9 @@ def documentation():
                     if not param in ["apify_app", "apify_request"]:
                         endpoint_description["body"][param] = "value"
 
-
+                if endpoint_description["body"] == {}:
+                    del endpoint_description["body"]
+                    
             if module_func.__doc__:
                 endpoint_description["doc"] = module_func.__doc__
 
